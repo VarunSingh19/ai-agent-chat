@@ -1,0 +1,65 @@
+version: "2026-11-01.1"
+owner: "FBC Safety & Operations"
+safety_reply_template: >-
+  CRITICAL SAFETY NOTICE: If you or anyone in the building is in immediate danger,
+  call 911 right away and evacuate to a safe location. Property emergency dispatch
+  has been alerted and you can also call your property emergency line at {emergency_phone}.
+
+rules:
+  - id: "emg-gas-leak"
+    category: "gas_leak"
+    phrases:
+      - "smell gas"
+      - "smell strong natural gas"
+      - "rotten egg smell"
+      - "gas leak"
+      - "hissing gas"
+      - "natural gas smell"
+  - id: "emg-fire-smoke"
+    category: "fire_smoke"
+    phrases:
+      - "smoke filling"
+      - "smoke coming from"
+      - "on fire"
+      - "flames coming"
+      - "sparks shooting"
+      - "burning smell from outlet"
+      - "fire in"
+  - id: "emg-carbon-monoxide"
+    category: "carbon_monoxide"
+    phrases:
+      - "carbon monoxide"
+      - "co detector"
+      - "co alarm"
+      - "monoxide alarm"
+  - id: "emg-major-flooding"
+    category: "major_flooding"
+    phrases:
+      - "burst pipe"
+      - "pipe burst"
+      - "ceiling caving"
+      - "water pouring through ceiling"
+      - "pouring through my bathroom ceiling"
+      - "it's flooding"
+      - "water gushing"
+      - "flooding the hallway"
+  - id: "emg-no-heat-freezing"
+    category: "no_heat_freezing"
+    phrases:
+      - "no heat in our unit"
+      - "no heat and it is"
+  - id: "emg-elevator-entrapment"
+    category: "elevator_entrapment"
+    phrases:
+      - "trapped in the elevator"
+      - "stuck inside the elevator"
+      - "elevator stuck between floors"
+      - "locked in my bedroom and cannot get out"
+  - id: "emg-break-in-threat"
+    category: "security_emergency"
+    phrases:
+      - "kicked in my front door"
+      - "someone broke into"
+      - "active intruder"
+      - "threatened with a weapon"
+

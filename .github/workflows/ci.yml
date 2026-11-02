@@ -1,0 +1,115 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:0.8.1-pg18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pdagent_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pdagent_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: valkey/valkey:8.0-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      PDAGENT_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/pdagent_test
+      PDAGENT_MIGRATOR_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/pdagent_test
+      PDAGENT_TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/pdagent_test
+      PDAGENT_REDIS_URL: redis://localhost:6379/0
+      # Tests mint tokens with the in-process test key; every other environment needs JWKS.
+      PDAGENT_ENVIRONMENT: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.13.6"
+          enable-cache: true
+
+      - name: Set up Python 3.14
+        run: uv python install 3.14
+
+      - name: Sync locked dependencies
+        run: uv sync --frozen
+
+      - name: Dependency advisory check (LLM04 Supply Chain)
+        run: uv audit --locked
+
+      - name: Lint and format check (Ruff)
+        run: |
+          uv run ruff check src tests migrations
+          uv run ruff format --check src tests migrations
+
+      - name: Strict typecheck (mypy --strict)
+        run: uv run mypy src/pdagent
+
+      - name: Migration up/down/up verification (Alembic)
+        run: |
+          uv run alembic upgrade head
+          uv run alembic downgrade -1
+          uv run alembic upgrade head
+
+      - name: Run test suite with coverage
+        run: uv run pytest
+
+      - name: Build production Docker image
+        run: docker build --tag pdagent:ci .
+
+  widget:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: widget
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js (widget/.nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: widget/.nvmrc
+          cache: npm
+          cache-dependency-path: widget/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Dependency advisory check
+        run: npm audit --omit=dev
+
+      - name: Types, spacing tokens, contrast, unit tests, build, bundle budget
+        run: npm run check
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: e2e and axe (320 px and 1280 px)
+        run: npm run test:e2e

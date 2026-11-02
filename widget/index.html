@@ -1,0 +1,66 @@
+<!doctype html>
+<!-- Dev harness only (Architecture.md §4). Not shipped; the build output is dist/pdk-assistant.js. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>pdk-assistant dev harness</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 1rem;
+        font-family: system-ui, sans-serif;
+        background: #eef1f4;
+        color: #18222d;
+        min-height: 100dvh;
+      }
+      main { max-width: 40rem; }
+      label { display: inline-flex; gap: 0.5rem; align-items: center; min-height: 2.75rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>pdk-assistant dev harness</h1>
+      <p>
+        The widget talks to the local API through this dev server (<code>/v1</code> is proxied to
+        <code>127.0.0.1:8000</code>) with a local dev token from <code>/dev/token</code>.
+      </p>
+      <label>
+        Theme
+        <select id="theme">
+          <option value="">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+      <p id="last-event" aria-live="polite"></p>
+    </main>
+
+    <pdk-assistant id="assistant" channel="web" lang="en"></pdk-assistant>
+
+    <script type="module">
+      import './src/pdk-assistant.ts';
+
+      const assistant = document.getElementById('assistant');
+      assistant.setAttribute('api-base', window.location.origin);
+      assistant.tokenProvider = async () => {
+        const res = await fetch('/dev/token', { cache: 'no-store' });
+        if (!res.ok) throw new Error('dev token unavailable');
+        return (await res.json()).token;
+      };
+
+      document.getElementById('theme').addEventListener('change', (e) => {
+        const value = e.target.value;
+        if (value) assistant.setAttribute('data-theme', value);
+        else assistant.removeAttribute('data-theme');
+      });
+
+      const lastEvent = document.getElementById('last-event');
+      for (const name of ['pdk-open-source', 'pdk-handoff', 'pdk-error', 'pdk-open-request-form']) {
+        assistant.addEventListener(name, (e) => {
+          lastEvent.textContent = `${name} ${JSON.stringify(e.detail)}`;
+        });
+      }
+    </script>
+  </body>
+</html>

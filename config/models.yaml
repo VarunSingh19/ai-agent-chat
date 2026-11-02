@@ -1,0 +1,86 @@
+priced_on: "2026-11-01"
+currency: "USD"
+
+providers:
+  anthropic:
+    priority: 1
+    small:
+      model_id: "claude-haiku-5-5"
+      effort: "medium"
+      min_cache_tokens: 512
+      input_per_1m_usd: 0.10
+      output_per_1m_usd: 0.50
+      cache_read_per_1m_usd: 0.01
+      cache_write_per_1m_usd: 0.125
+      eligible: true
+    large:
+      model_id: "claude-sonnet-5-5"
+      effort: "high"
+      min_cache_tokens: 512
+      input_per_1m_usd: 2.00
+      output_per_1m_usd: 10.00
+      cache_read_per_1m_usd: 0.10
+      cache_write_per_1m_usd: 2.50
+      eligible: true
+
+  openai:
+    priority: 2
+    small:
+      model_id: "gpt-6-luna"
+      effort: "medium"
+      min_cache_tokens: 1024
+      input_per_1m_usd: 0.10
+      output_per_1m_usd: 0.50
+      cache_read_per_1m_usd: 0.01
+      cache_write_per_1m_usd: 0.10
+      eligible: true
+    large:
+      model_id: "gpt-6.1-sol"
+      effort: "high"
+      min_cache_tokens: 1024
+      input_per_1m_usd: 2.00
+      output_per_1m_usd: 10.00
+      cache_read_per_1m_usd: 0.10
+      cache_write_per_1m_usd: 2.00
+      eligible: true
+
+  gemini:
+    priority: 3
+    small:
+      model_id: "gemini-3.8-flash"
+      effort: "medium"
+      min_cache_tokens: 2048
+      input_per_1m_usd: 0.10
+      output_per_1m_usd: 0.40
+      cache_read_per_1m_usd: 0.01
+      cache_write_per_1m_usd: 0.10
+      eligible: true
+    large:
+      model_id: "gemini-4-argon"
+      effort: "high"
+      min_cache_tokens: 4096
+      input_per_1m_usd: 1.50
+      output_per_1m_usd: 8.00
+      cache_read_per_1m_usd: 0.15
+      cache_write_per_1m_usd: 1.50
+      eligible: true
+
+embeddings:
+  provider: "openai"
+  model_id: "text-embedding-3-small"
+  dimensions: 1536
+  input_per_1m_usd: 0.02
+
+routes:
+  small:
+    slot: "small"
+    max_output_tokens: 400
+    failover_chain: ["anthropic", "openai", "gemini"]
+  large:
+    slot: "large"
+    max_output_tokens: 400
+    failover_chain: ["anthropic", "openai", "gemini"]
+  triage:
+    slot: "large"
+    max_output_tokens: 400
+    failover_chain: ["anthropic", "openai", "gemini"]
